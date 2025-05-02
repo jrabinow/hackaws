@@ -2,6 +2,7 @@ package com.baeldung.jdi;
 
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.*;
+import java.util.Scanner;
 
 public class JDIExampleDebugger {
     private Class debugClass;
@@ -39,6 +40,14 @@ public class JDIExampleDebugger {
         }
     }
 
+    public static void printThreads(JDIDebuggerCore debuggerCore) {
+        System.out.println("Current threads:");
+        for (var thread : debuggerCore.listThreads()) {
+            System.out.printf("  [id=%d] %s (suspended=%s, status=%d)%n",
+                thread.uniqueID(), thread.name(), thread.isSuspended(), thread.status());
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         JDIExampleDebugger debuggerInstance = new JDIExampleDebugger();
         debuggerInstance.setDebugClass(JDIExampleDebuggee.class);
@@ -47,6 +56,7 @@ public class JDIExampleDebugger {
         VirtualMachine vm = null;
         SessionManager sessionManager = new SessionManager();
         DebugSession session = null;
+        Scanner scanner = new Scanner(System.in);
         try {
             vm = debuggerInstance.connectAndLaunchVM();
             debuggerInstance.enableClassPrepareRequest(vm);
@@ -55,12 +65,21 @@ public class JDIExampleDebugger {
             EventSet eventSet = null;
             while ((eventSet = vm.eventQueue().remove()) != null) {
                 for (Event event : eventSet) {
+                    if (event instanceof ThreadStartEvent) {
+                        debuggerCore.onThreadStart((ThreadStartEvent) event);
+                        printThreads(debuggerCore);
+                    }
+                    if (event instanceof ThreadDeathEvent) {
+                        debuggerCore.onThreadDeath((ThreadDeathEvent) event);
+                        printThreads(debuggerCore);
+                    }
                     if (event instanceof ClassPrepareEvent) {
                         String source = ((ClassPrepareEvent)event).referenceType().sourceName();
                         debuggerCore.setBreakpoints(source, debuggerInstance.getBreakPointLines());
                     }
                     if (event instanceof BreakpointEvent) {
                         event.request().disable();
+                        printThreads(debuggerCore);
                         debuggerInstance.displayVariables(debuggerCore);
                         debuggerCore.stepOver(((BreakpointEvent)event).thread());
                     }
@@ -74,10 +93,9 @@ public class JDIExampleDebugger {
             System.out.println("Virtual Machine is disconnected.");
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (session != null) {
-                sessionManager.removeSession(session.getSessionId());
-            }
+        }
+        if (session != null) {
+            sessionManager.removeSession(session.getSessionId());
         }
     }
 }

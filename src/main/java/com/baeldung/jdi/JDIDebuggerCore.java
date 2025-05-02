@@ -4,13 +4,73 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JDIDebuggerCore implements DebuggerCore {
     private final VirtualMachine vm;
     private final Map<String, List<Integer>> breakpoints = new HashMap<>();
+    private final Map<Long, ThreadReference> threads = new ConcurrentHashMap<>();
 
     public JDIDebuggerCore(VirtualMachine vm) {
         this.vm = vm;
+        // Initialize thread map
+        for (ThreadReference thread : vm.allThreads()) {
+            threads.put(thread.uniqueID(), thread);
+        }
+    }
+
+    // Call this from the event loop on ThreadStartEvent
+    public void onThreadStart(ThreadStartEvent event) {
+        ThreadReference thread = event.thread();
+        threads.put(thread.uniqueID(), thread);
+    }
+
+    // Call this from the event loop on ThreadDeathEvent
+    public void onThreadDeath(ThreadDeathEvent event) {
+        ThreadReference thread = event.thread();
+        threads.remove(thread.uniqueID());
+    }
+
+    @Override
+    public List<ThreadReference> listThreads() {
+        return new ArrayList<>(threads.values());
+    }
+
+    @Override
+    public ThreadReference getThread(long threadId) {
+        return threads.get(threadId);
+    }
+
+    @Override
+    public Map<String, Object> variables(long threadId, int frameId) {
+        ThreadReference thread = threads.get(threadId);
+        if (thread != null && thread.isSuspended()) {
+            try {
+                if (thread.frameCount() > frameId) {
+                    StackFrame frame = thread.frame(frameId);
+                    Map<LocalVariable, Value> visibleVariables = frame.getValues(frame.visibleVariables());
+                    Map<String, Object> result = new HashMap<>();
+                    for (Map.Entry<LocalVariable, Value> entry : visibleVariables.entrySet()) {
+                        result.put(entry.getKey().name(), entry.getValue());
+                    }
+                    return result;
+                }
+            } catch (IncompatibleThreadStateException | AbsentInformationException e) {
+                // Ignore and continue
+            }
+        }
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public Map<String, Object> variables(int frameId) {
+        // Use the first suspended thread
+        for (ThreadReference thread : threads.values()) {
+            if (thread.isSuspended()) {
+                return variables(thread.uniqueID(), frameId);
+            }
+        }
+        return Collections.emptyMap();
     }
 
     @Override
@@ -114,29 +174,6 @@ public class JDIDebuggerCore implements DebuggerCore {
         }
         StepRequest stepRequest = erm.createStepRequest(thread, StepRequest.STEP_LINE, StepRequest.STEP_OUT);
         stepRequest.enable();
-    }
-
-    @Override
-    public Map<String, Object> variables(int frameId) {
-        // Find the first suspended thread
-        for (ThreadReference thread : vm.allThreads()) {
-            if (thread.isSuspended()) {
-                try {
-                    if (thread.frameCount() > frameId) {
-                        StackFrame frame = thread.frame(frameId);
-                        Map<LocalVariable, Value> visibleVariables = frame.getValues(frame.visibleVariables());
-                        Map<String, Object> result = new HashMap<>();
-                        for (Map.Entry<LocalVariable, Value> entry : visibleVariables.entrySet()) {
-                            result.put(entry.getKey().name(), entry.getValue());
-                        }
-                        return result;
-                    }
-                } catch (IncompatibleThreadStateException | AbsentInformationException e) {
-                    // Ignore and continue
-                }
-            }
-        }
-        return Collections.emptyMap();
     }
 
     // Additional methods for event handling, etc., can be added as needed
