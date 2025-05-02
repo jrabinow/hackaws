@@ -4,6 +4,11 @@
       "id": "fix-errors-before-next-step",
       "description": "Always fix errors before proceeding to the next step.",
       "severity": "error"
+    },
+    {
+      "id": "always-recompile-after-changes",
+      "description": "Always recompile after making any changes.",
+      "severity": "error"
     }
   ]
 } 
