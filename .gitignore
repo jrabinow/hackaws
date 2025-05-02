@@ -4,4 +4,6 @@ __pycache__/
 .env
 mcp.jsons
 .venv
-
+.gradle
+/build
+/bin
