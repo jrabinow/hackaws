@@ -16,6 +16,10 @@ public class JDIExampleDebugger {
         var launchingConnector = com.sun.jdi.Bootstrap.virtualMachineManager().defaultConnector();
         var arguments = launchingConnector.defaultArguments();
         arguments.get("main").setValue(debugClass.getName());
+        // Set classpath for debuggee JVM to this JAR
+        String jarPath = new java.io.File(JDIExampleDebugger.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
+        String options = "-cp " + jarPath;
+        arguments.get("options").setValue(options);
         return launchingConnector.launch(arguments);
     }
 
