@@ -11,7 +11,7 @@ public class SessionManager {
     public DebugSession createSession(VirtualMachine vm) {
         String sessionId = UUID.randomUUID().toString();
         JDIDebuggerCore core = new JDIDebuggerCore(vm);
-        DebugSession session = new DebugSession(sessionId, core, vm);
+        DebugSession session = new DebugSession(sessionId, core, vm, "default-user");
         sessions.put(sessionId, session);
         return session;
     }
