@@ -1,0 +1,9 @@
+{
+  "rules": [
+    {
+      "id": "fix-errors-before-next-step",
+      "description": "Always fix errors before proceeding to the next step.",
+      "severity": "error"
+    }
+  ]
+} 
