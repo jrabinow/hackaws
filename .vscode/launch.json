@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug JDIExampleDebugger",
+            "request": "launch",
+            "mainClass": "com.baeldung.jdi.JDIExampleDebugger",
+            "classPaths": [
+                "${workspaceFolder}",
+                "${env:JAVA_HOME}/lib/tools.jar"
+            ],
+            "sourcePaths": ["${workspaceFolder}"],
+            "args": [],
+            "preLaunchTask": "build-java",
+            "vmArgs": "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+        },
+        {
+            "type": "java",
+            "name": "Debug JDIExampleDebuggee",
+            "request": "launch",
+            "mainClass": "com.baeldung.jdi.JDIExampleDebuggee",
+            "classPaths": [
+                "${workspaceFolder}",
+                "${env:JAVA_HOME}/lib/tools.jar"
+            ],
+            "sourcePaths": ["${workspaceFolder}"],
+            "preLaunchTask": "build-java"
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-java",
+            "type": "shell",
+            "command": "javac",
+            "args": [
+                "-g",
+                "-d",
+                "${workspaceFolder}",
+                "-cp",
+                "${workspaceFolder}:${env:JAVA_HOME}/lib/tools.jar",
+                "${workspaceFolder}/com/baeldung/jdi/*.java"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": ["$javac"]
+        }
+    ]
+}
