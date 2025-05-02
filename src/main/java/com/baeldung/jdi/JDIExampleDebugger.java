@@ -76,27 +76,16 @@ public class JDIExampleDebugger {
     }
 
     /**
-     * Sets the break points at the line numbers mentioned in breakPointLines array
-     * @param vm
-     * @param event
-     * @throws AbsentInformationException
-     */
-    public void setBreakPoints(VirtualMachine vm, ClassPrepareEvent event) throws AbsentInformationException {
-        ClassType classType = (ClassType) event.referenceType();
-        for(int lineNumber: breakPointLines) {
-            Location location = classType.locationsOfLine(lineNumber).get(0);
-            BreakpointRequest bpReq = vm.eventRequestManager().createBreakpointRequest(location);
-            bpReq.enable();
-        }
-    }
-
-    /**
      * Displays the visible variables
      * @param event
      * @throws IncompatibleThreadStateException
      * @throws AbsentInformationException
      */
     public void displayVariables(LocatableEvent event) throws IncompatibleThreadStateException, AbsentInformationException {
+        if (!event.thread().isSuspended() || event.thread().frameCount() == 0) {
+            // Skip if thread is not suspended or has no frames
+            return;
+        }
         StackFrame stackFrame = event.thread().frame(0);
         if(stackFrame.location().toString().contains(debugClass.getName())) {
             Map<LocalVariable, Value> visibleVariables = stackFrame.getValues(stackFrame.visibleVariables());
@@ -107,16 +96,13 @@ public class JDIExampleDebugger {
         }
     }
 
-    /**
-     * Enables step request for a break point
-     * @param vm
-     * @param event
-     */
-    public void enableStepRequest(VirtualMachine vm, BreakpointEvent event) {
-        //enable step request for last break point
-        if(event.location().toString().contains(debugClass.getName()+":"+breakPointLines[breakPointLines.length-1])) {
-            StepRequest stepRequest = vm.eventRequestManager().createStepRequest(event.thread(), StepRequest.STEP_LINE, StepRequest.STEP_OVER);
-            stepRequest.enable();    
+    public void displayVariables(JDIDebuggerCore debuggerCore) {
+        Map<String, Object> variables = debuggerCore.variables(0);
+        if (!variables.isEmpty()) {
+            System.out.println("Variables at top frame > ");
+            for (Map.Entry<String, Object> entry : variables.entrySet()) {
+                System.out.println(entry.getKey() + " = " + entry.getValue());
+            }
         }
     }
 
@@ -127,26 +113,31 @@ public class JDIExampleDebugger {
         int[] breakPoints = {6, 9};
         debuggerInstance.setBreakPointLines(breakPoints);
         VirtualMachine vm = null;
+        JDIDebuggerCore debuggerCore = null;
 
         try {
             vm = debuggerInstance.connectAndLaunchVM();
             debuggerInstance.enableClassPrepareRequest(vm);
+            debuggerCore = new JDIDebuggerCore(vm);
 
             EventSet eventSet = null;
             while ((eventSet = vm.eventQueue().remove()) != null) {
                 for (Event event : eventSet) {
                     if (event instanceof ClassPrepareEvent) {
-                        debuggerInstance.setBreakPoints(vm, (ClassPrepareEvent)event);
+                        // Use JDIDebuggerCore to set breakpoints
+                        String source = ((ClassPrepareEvent)event).referenceType().sourceName();
+                        debuggerCore.setBreakpoints(source, debuggerInstance.getBreakPointLines());
                     }
 
                     if (event instanceof BreakpointEvent) {
                         event.request().disable();
-                        debuggerInstance.displayVariables((BreakpointEvent) event);
-                        debuggerInstance.enableStepRequest(vm, (BreakpointEvent)event);
+                        debuggerInstance.displayVariables(debuggerCore);
+                        // Use JDIDebuggerCore for stepping
+                        debuggerCore.stepOver(((BreakpointEvent)event).thread());
                     }
 
                     if (event instanceof StepEvent) {
-                        debuggerInstance.displayVariables((StepEvent) event);
+                        debuggerInstance.displayVariables(debuggerCore);
                     }
                     vm.resume();
                 }
