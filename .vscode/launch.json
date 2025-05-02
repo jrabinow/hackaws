@@ -2,6 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Duck",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main/python/main.py",
+            "cwd": "${workspaceFolder}/src/main/python",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src/main/python"
+            }
+        },
+        {
             "type": "java",
             "name": "Debug JDIExampleDebugger",
             "request": "launch",

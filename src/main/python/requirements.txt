@@ -1,0 +1,17 @@
+# Core dependencies
+click
+python-dotenv
+requests
+pydantic
+prompt_toolkit
+
+# LLM frameworks
+langchain
+langchain-openai
+langchain-anthropic
+langchain-community
+
+
+# MCP integration
+claude-api
+fastmcp

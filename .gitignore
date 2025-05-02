@@ -1,1 +1,7 @@
 *.class
+*.pyc
+__pycache__/
+.env
+mcp.jsons
+.venv
+
