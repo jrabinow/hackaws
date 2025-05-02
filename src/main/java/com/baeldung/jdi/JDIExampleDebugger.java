@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Map;
+import java.util.UUID;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Bootstrap;
@@ -113,12 +114,14 @@ public class JDIExampleDebugger {
         int[] breakPoints = {6, 9};
         debuggerInstance.setBreakPointLines(breakPoints);
         VirtualMachine vm = null;
-        JDIDebuggerCore debuggerCore = null;
+        SessionManager sessionManager = new SessionManager();
+        DebugSession session = null;
 
         try {
             vm = debuggerInstance.connectAndLaunchVM();
             debuggerInstance.enableClassPrepareRequest(vm);
-            debuggerCore = new JDIDebuggerCore(vm);
+            session = sessionManager.createSession(vm);
+            JDIDebuggerCore debuggerCore = session.getDebuggerCore();
 
             EventSet eventSet = null;
             while ((eventSet = vm.eventQueue().remove()) != null) {
@@ -148,13 +151,17 @@ public class JDIExampleDebugger {
             e.printStackTrace();
         } 
         finally {
-            InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
-            OutputStreamWriter writer = new OutputStreamWriter(System.out);
-            char[] buf = new char[512];
+            if (session != null) {
+                sessionManager.removeSession(session.getSessionId());
+            }
+            // Move this after session cleanup
+            // InputStreamReader reader = new InputStreamReader(vm.process().getInputStream());
+            // OutputStreamWriter writer = new OutputStreamWriter(System.out);
+            // char[] buf = new char[512];
 
-            reader.read(buf);
-            writer.write(buf);
-            writer.flush();
+            // reader.read(buf);
+            // writer.write(buf);
+            // writer.flush();
         }
 
     }
