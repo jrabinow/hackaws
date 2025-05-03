@@ -68,7 +68,11 @@ class LLMProvider:
 
             # Create a function that calls the MCP tool
             def create_tool_func(server=server_name, tool=tool_name):
-                def tool_func(**kwargs):
+                def tool_func(*args, **kwargs):
+                    # Handle positional arguments if provided
+                    if args:
+                        # Convert the first positional argument to a parameter the tool expects
+                        return self.mcp_client.use_tool(server, tool, {"input": args[0]})
                     return self.mcp_client.use_tool(server, tool, kwargs)
                 return tool_func
 

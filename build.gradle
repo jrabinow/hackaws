@@ -1,40 +1,74 @@
 plugins {
     id 'java'
-    id 'application'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 
-group = 'com.hackathon'
-version = '1.0.0'
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '21'
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
+}
+
+ext {
+    set('springAiVersion', "1.0.0-M6")
 }
 
 dependencies {
-    // Add your dependencies here
-    implementation 'org.springframework.boot:spring-boot-starter:3.1.0'
+    // Jackson for JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    
+    // Spring Boot dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    
+    // Spring AI dependencies
+    implementation 'org.springframework.ai:spring-ai-mcp-server-spring-boot-starter'
+    implementation "org.springframework.ai:spring-ai-core:${springAiVersion}"
+    implementation "org.springframework.ai:spring-ai-openai:${springAiVersion}"
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    
+    // Add JitPack repository for MCP Java SDK
+    implementation 'com.github.modelcontextprotocol:java-sdk:main-SNAPSHOT'
+    
+    // For Spring integration
+    implementation 'com.github.modelcontextprotocol.java-sdk:mcp-spring-webmvc:main-SNAPSHOT'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    
+    // Reduce boilerplate
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // JDI dependencies - use tools.jar from JDK
+    implementation files(System.getProperty("java.home") + "/../lib/tools.jar")
+    
+    // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-    compileOnly 'org.projectlombok:lombok:1.18.38'
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
-application {
-    mainClass = 'com.baeldung.jdi.JDIExampleDebugger'
-}
-
-test {
+tasks.named('test') {
     useJUnitPlatform()
 }
 
-jar {
-    manifest {
-        attributes(
-            'Main-Class': 'com.baeldung.jdi.JDIExampleDebugger'
-        )
+// Configure JIB for containerization
+jib {
+    to {
+        image = "duck-mcp:${version}"
     }
 }

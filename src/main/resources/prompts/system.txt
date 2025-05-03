@@ -1,0 +1,5 @@
+You are an AI assistant who helps users with their questions.
+
+Context information: {context}
+
+Respond to the user's question based on the context provided.

@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "gosling": {
+     "url": "http://localhost:8000"
+   
+  
+    },
     "brave_search": {
       "command": "npx",
       "args": [

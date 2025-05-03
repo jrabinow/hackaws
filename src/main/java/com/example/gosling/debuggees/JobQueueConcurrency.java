@@ -1,4 +1,4 @@
-package com.example.duck.debuggee;
+package com.example.gosling.debuggees;
 
 import java.util.*;
 

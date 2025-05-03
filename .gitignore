@@ -2,8 +2,10 @@
 *.pyc
 __pycache__/
 .env
-mcp.jsons
+mcp.json
 .venv
 .gradle
 /build
 /bin
+
+build

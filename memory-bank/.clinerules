@@ -1,0 +1,97 @@
+# Cline Rules for HackAWS Java Debugger
+
+## Project Patterns
+
+1. **Dual Language Structure**:
+
+   - Java is used for the MCP server and debugging core
+   - Python is used for the chat interface and LLM integration
+   - Communication between the two is through the Model Context Protocol (MCP)
+
+2. **Protocol Flexibility**:
+
+   - The system supports multiple protocols: stdin, SSE, HTTP
+   - Protocol selection is handled through command-line arguments
+   - Protocol-specific logic is encapsulated in the ProtocolHandler class
+   - HTTP and SSE protocols are implemented using Spring Boot controllers
+   - Protocol handlers communicate with the CommandHandler for debugging operations
+
+3. **Command Pattern Implementation**:
+
+   - Commands are processed in the CommandHandler class
+   - Each command corresponds to a specific debugging action
+   - Commands follow a string-based format currently, may evolve to JSON
+
+4. **Simulated-First Development**:
+
+   - Functionality is first implemented with simulated responses
+   - This allows for testing the interface without full implementation
+   - Gradually replaced with actual functionality as development progresses
+
+5. **LLM Intent Classification**:
+   - Natural language is processed using intent classification
+   - Intents are mapped to specific debugging commands
+   - Structured in a way that allows for future enhancement
+
+## Coding Standards
+
+1. **Java Components**:
+
+   - Java 17 language features are used
+   - Spring Boot conventions for HTTP/SSE components
+   - JSON for data serialization/deserialization
+   - Each class has a clear responsibility
+   - Package structure follows com.example.duck pattern
+
+2. **Python Components**:
+   - Modern Python patterns with type hints
+   - Modular organization with clear separation of concerns
+   - Dependency injection for LLM providers
+   - Environment variables for configuration
+
+## File Organization
+
+1. **Java Structure**:
+   - `com.example.duck`: Main package for MCP server
+   - `com.example.duck.debuggee`: Sample debuggee programs
+   - `com.example.duck.debugger`: (Planned) JDI integration components
+2. **Python Structure**:
+   - `duck` package contains all Python functionality
+   - `chat_handler.py`: Handles chat interactions
+   - `provider.py`: LLM provider integration
+   - `mcp_client.py`: MCP client implementation
+
+## Implementation Notes
+
+1. **Chat Handler Logic**:
+   - Intent classification happens in `_determine_intent` method
+   - Intent handling delegates to specific methods
+   - "God mode" provides a direct channel to the LLM
+2. **Command Processing**:
+   - Commands are parsed in the CommandHandler class
+   - Each command method returns a JSON response
+   - Command methods update simulated state
+3. **MCP Integration**:
+   - MCP server configured in mcp.json
+   - MCP client discovers available tools at runtime
+   - Tool schemas define the interface between components
+
+## Important Environment Variables
+
+1. **LLM Configuration**:
+   - `MODEL_PROVIDER`: "openai" or "anthropic"
+   - `OPENAI_API_KEY`: API key for OpenAI
+   - `OPENAI_MODEL`: Model to use (default: "gpt-3.5-turbo")
+   - `ANTHROPIC_API_KEY`: API key for Anthropic
+   - `ANTHROPIC_MODEL`: Model to use (default: "claude-2")
+2. **MCP Configuration**:
+   - `MCP_CONFIG_PATH`: Path to MCP configuration file
+3. **Special Features**:
+   - `IDDQD`: Secret passphrase for activating "God mode"
+
+## Testing Strategy
+
+- Unit tests should be created for Java components
+- Integration tests should verify cross-language communication
+- Manual testing needed for LLM interactions
+- Simulated debugging should be thoroughly tested before JDI integration

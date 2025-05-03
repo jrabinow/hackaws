@@ -14,6 +14,18 @@
             }
         },
         {
+            "name": "Duck DAP",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main/python/main.py",
+            "cwd": "${workspaceFolder}/src/main/python",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src/main/python"
+            }
+        },
+        {
             "type": "java",
             "name": "Debug JDIExampleDebugger",
             "request": "launch",
@@ -38,6 +50,16 @@
             ],
             "sourcePaths": ["${workspaceFolder}"],
             "preLaunchTask": "build-java"
+        },
+        {
+            "type": "java",
+            "name": "MCP Server",
+            "request": "launch",
+            "mainClass": "com.example.duck.McpApplication",
+            "projectName": "duck-mcp",
+            "env": {
+                "OPENAI_API_KEY": "${env:OPENAI_API_KEY}"
+            }
         }
     ]
 }
