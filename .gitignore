@@ -4,8 +4,12 @@ __pycache__/
 .env
 mcp.json
 .venv
+<<<<<<< HEAD
 .gradle
 /build
 /bin
+=======
+.gradle/
+>>>>>>> 7143b40 (asdf)
 
 build

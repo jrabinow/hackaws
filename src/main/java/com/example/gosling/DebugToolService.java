@@ -1,58 +1,77 @@
 package com.example.gosling;
 
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.tool.Tool;
+import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A simple example debug MCP server service.
- * This is a simplified version that demonstrates the concept without using complex dependencies.
+ * Service providing tools, resources, and prompts for the debug MCP server.
+ * This demonstrates a simple implementation of MCP tools using Spring AI.
  */
 public class DebugToolService {
     
     // In-memory storage for our "variables" - simulating a debugging environment
     private final Map<String, Object> variables = new ConcurrentHashMap<>();
-    
+
     /**
-     * Inspect a variable in the debug context.
-     *
-     * @param name The name of the variable to inspect
-     * @return A string representation of the variable and its type
+     * Get the inspect variable tool.
+     * This tool inspects a variable in the debug context.
      */
-    public String inspectVariable(String name) {
-        System.out.println("Inspecting variable: " + name);
-        
-        if (variables.containsKey(name)) {
-            Object value = variables.get(name);
-            String type = value != null ? value.getClass().getSimpleName() : "null";
-            return String.format("Variable '%s' = %s (Type: %s)", name, value, type);
-        } else {
-            return String.format("Variable '%s' not found in current context", name);
-        }
+    public Tool getInspectVariableTool() {
+        return Tool.builder("inspect_variable")
+            .description("Inspect the value of a variable in the current debug context")
+            .parameter("name", String.class, "Name of the variable to inspect")
+            .action(params -> {
+                String name = (String) params.get("name");
+                log.info("Inspecting variable: {}", name);
+                
+                if (variables.containsKey(name)) {
+                    Object value = variables.get(name);
+                    String type = value != null ? value.getClass().getSimpleName() : "null";
+                    return "Variable '" + name + "' = " + value + " (Type: " + type + ")";
+                } else {
+                    return "Variable '" + name + "' not found in current context";
+                }
+            })
+            .build();
     }
     
     /**
-     * Set a variable in the debug context.
-     *
-     * @param name The name of the variable to set
-     * @param value The string representation of the value to set
-     * @return A confirmation message that the variable was set
+     * Get the set variable tool.
+     * This tool sets a variable in the debug context.
      */
-    public String setVariable(String name, String value) {
-        System.out.println("Setting variable: " + name + " = " + value);
-        variables.put(name, value);
-        return String.format("Variable '%s' set to '%s'", name, value);
+    public Tool getSetVariableTool() {
+        return Tool.builder("set_variable")
+            .description("Set the value of a variable in the current debug context")
+            .parameter("name", String.class, "Name of the variable to set")
+            .parameter("value", String.class, "String representation of the value to set")
+            .action(params -> {
+                String name = (String) params.get("name");
+                String value = (String) params.get("value");
+                
+                log.info("Setting variable: {} = {}", name, value);
+                variables.put(name, value);
+                
+                return "Variable '" + name + "' set to '" + value + "'";
+            })
+            .build();
     }
     
     /**
-     * Get all debug variables.
-     *
-     * @return A formatted string containing all variables
+     * Get all debug variables as a document for resource access.
+     * This demonstrates how to expose a resource in the MCP context.
      */
-    public String getDebugVariables() {
-        System.out.println("Retrieving all variables");
+    public Document getDebugVariablesDocument() {
+        log.info("Retrieving all variables as a document");
         
         StringBuilder builder = new StringBuilder();
         builder.append("Debug Variables:\n\n");
@@ -66,19 +85,15 @@ public class DebugToolService {
             });
         }
         
-        return builder.toString();
+        return new Document(builder.toString(), Map.of("uri", "debug://variables"));
     }
     
     /**
      * Debug assistance functionality.
      * This would typically use an LLM for generating responses.
-     *
-     * @param code The code snippet that has an issue
-     * @param issue The description of the problem
-     * @return A debug analysis
      */
     public String generateDebugAssistance(String code, String issue) {
-        System.out.println("Generating debug assistance for issue: " + issue);
+        log.info("Generating debug assistance for issue: {}", issue);
         
         // In a real implementation, this might use an LLM or some analysis logic
         // For this example, we'll just return a simulated response
@@ -94,74 +109,12 @@ public class DebugToolService {
     }
     
     /**
-     * Example method to easily get tool descriptors for documentation.
-     *
-     * @return A list of tool descriptors
+     * Helper method to get all tools provided by this service.
      */
-    public List<ToolDescriptor> getToolDescriptors() {
-        List<ToolDescriptor> descriptors = new ArrayList<>();
-        
-        // inspect_variable tool
-        descriptors.add(new ToolDescriptor(
-            "inspect_variable",
-            "Inspect the value of a variable in the current debug context",
-            Map.of("name", "Name of the variable to inspect")
-        ));
-        
-        // set_variable tool
-        descriptors.add(new ToolDescriptor(
-            "set_variable",
-            "Set the value of a variable in the current debug context",
-            Map.of(
-                "name", "Name of the variable to set",
-                "value", "String representation of the value to set"
-            )
-        ));
-        
-        // get_variables tool
-        descriptors.add(new ToolDescriptor(
-            "get_variables",
-            "Get the current state of all variables in the debug context",
-            Map.of()
-        ));
-        
-        // debug_assistance tool
-        descriptors.add(new ToolDescriptor(
-            "debug_assistance",
-            "Get debugging assistance for code issues",
-            Map.of(
-                "code", "The code snippet that has an issue",
-                "issue", "Description of the problem or error message"
-            )
-        ));
-        
-        return descriptors;
-    }
-    
-    /**
-     * Helper class to describe tools for documentation purposes.
-     */
-    public static class ToolDescriptor {
-        private final String name;
-        private final String description;
-        private final Map<String, String> parameters;
-        
-        public ToolDescriptor(String name, String description, Map<String, String> parameters) {
-            this.name = name;
-            this.description = description;
-            this.parameters = parameters;
-        }
-        
-        public String getName() {
-            return name;
-        }
-        
-        public String getDescription() {
-            return description;
-        }
-        
-        public Map<String, String> getParameters() {
-            return parameters;
-        }
+    public List<Tool> getTools() {
+        return List.of(
+            getInspectVariableTool(),
+            getSetVariableTool()
+        );
     }
 }
